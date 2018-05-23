@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <title>树列表</title>
+    <style>
+        ul{
+            list-style: none;
+        }
+        button:nth-child(n+2){
+            display: none;
+        }
+        input:nth-child(n+3){
+            display: none;
+        }
+        p:hover>button{
+            display: inline;
+        }
+        p:hover>input{
+            display:inline;
+        }
+    </style>
+    <script>
+            let data = [
+                { name : '手机'  ,ID : 1 , PID : 0 },
+                { name : '诺基亚',ID : 11, PID : 1 },
+                { name : 'C6(音乐版)', ID : 111, PID : 11 },
+                { name : 'X6(导航版)', ID : 112, PID : 11 },
+                { name : '5230(世博版)', ID : 113, PID : 11 },
+                { name : 'N97mini', ID : 114, PID : 1.1 },
+                { name : '三星' , ID : 12, PID : 1 },
+                { name : '索爱' , ID : 13, PID : 1 },
+                { name : '电脑' , ID : 2 , PID : 0 },
+                { name : '硬件' , ID : 21, PID : 2 },
+                { name : '整机' , ID : 22, PID : 2 },
+                { name : '网络设备' , ID : 23, PID : 2 },
+                { name : '家电' , ID : 3, PID : 0 },
+                { name : '冰箱' , ID : 31 , PID : 3 },
+                { name : '电视' , ID : 32 , PID : 3 },
+                { name : '空调' , ID : 33 , PID : 3 }
+            ];
+            $().ready(function(){
+                for(let i of data){
+                    let obj = new Tree(i.name);
+                    obj.id = i.ID;
+                    obj.pid = i.PID;
+                    createTree(obj);
+                }
+            })
+        function Tree(name){
+            this.name = name;
+            this.id = null;
+            this.pid = null;
+        }
+        function add(obj){      //添加树节点
+            let name = obj.name;
+            let id = obj.id;
+            let pid = obj.pid;
+            let li = $('<li></li>');
+            let p = $('<p></p>');
+            let button1 = $('<button></button>');
+            button1.text('-');
+            button1.attr('onclick','toggle()')
+            let check = $('<input type = "checkbox">');
+            check.attr('onclick','checkall()');
+            let button2 = $('<button></button>');
+            button2.text('添加节点');
+            button2.attr('onclick','addNew()');
+            let button3 = $('<button></button>');
+            button3.text('删除节点');
+            button3.attr('onclick','remove()');
+            let input = $('<input type = "text">');
+            li.attr('id',id);
+            ($('#'+pid).children('ul').length)||($('#'+pid).append($('<ul></ul>')));
+            $('#'+pid).children('ul').append(li);
+            $('#'+id).append(p);
+            //debugger;
+            $('#'+id).children('p').text(name);
+            $('#'+id).children('p').prepend(check);
+            $('#'+id).children('p').prepend(button1);
+            $('#'+id).children('p').append(button2);
+            $('#'+id).children('p').append(button3);
+            $('#'+id).children('p').append(input);
+        }
+        function createTree(obj){     // 创建树控件
+            let name = obj.name;
+            let id = obj.id;
+            let pid = obj.pid;
+            if(!($('#'+pid).length)){
+                let ul = $('<ul></ul>');
+                let li = $('<li></li>');
+                li.attr('id',pid);
+                ul.append(li);
+                $('body').append(ul);
+            }
+            add(obj);
+        }
+        function addNew(){    //添加新的树节点
+            let name = event.path[1].children[4].value;
+            let pid = event.path[2].id;
+            debugger;
+            if(event.path[2].children.length == 1){
+                var num = 1;
+            }
+            else{
+                var num = event.path[2].querySelector('ul').children.length + 1;
+            }
+            let id = pid + num;
+            let obj = new Tree(name);
+            obj.id = id;
+            obj.pid = pid;
+            add(obj);
+        }
+        function remove(){     //删除当前的树节点
+            event.path[2].remove();
+        }
+        function toggle(){       //切换树节点显示状态
+            let ul = event.path[2].querySelector('ul');
+            if(event.path[0].innerText == '-'){
+                ul.style.display = 'none';
+                event.path[0].innerText = '+';
+            }else{
+                ul.style.display = 'block';
+                event.path[0].innerText = '-';
+            }
+        }
+        function checkall(){    //checkbox选择设定
+            let parent = event.path[4];
+            let child = event.path[2];
+            let childinput = child.querySelectorAll('input');
+            console.log(event);
+            if(event.path[0].checked){    //父元素被选定，子元素都被选定
+                for(let check of childinput){
+                    if(check.getAttribute('type') == 'checkbox'){
+                        check.checked = true;
+                    }
+                }
+            }
+            else{
+
+
+                for(let check of childinput){   //父元素被取消，子元素都被取消
+                    if(check.getAttribute('type') == 'checkbox'){
+                        check.checked = false;
+                    }
+                }
+            }
+
+            // firefly 18/05/22 ------------------------------------------------------
+            // 从下往上遍历
+            for(let i in event.path) {/*
+                if (event.path[i].id !a= 0) {*/
+                    let uls = $(event.path[i]).children('ul'); 
+                    if (uls.length > 0) {
+                        let checked = true; // 默认所有子节点都已经选中
+
+                        // 如果找到任何一个子节点为未选中，那么父节点就不能选中
+                        if ($(uls[0]).find(':checkbox:not(:checked)').length > 0) {
+                            checked = false;
+                        }
+
+                        // 设置选中状态
+                        $('#' + event.path[i].id + ' > p > :checkbox')[0].checked = checked;
+                    }  
+
+                //}
+            }
+
+            return;
+            // firefly 18/05/22 -------------------------------------------------------
+
+            //debugger;
+            /*let parentinput = parent.querySelectorAll('input');
+            for(let index in parentinput){
+                if(index != 0){
+                    if(index != 'length') {    // for in 循环到后面会将parentinput中不输入元素的其他属性引入
+                        if ((parentinput[index].getAttribute('type')) == 'checkbox') {
+                            if (!parentinput[index].checked) {
+                                event.path[4].querySelectorAll('input')[0].checked = false;
+                                return;
+                            }
+                        }
+                    }
+                    else{
+                        break;
+                    }
+                }
+            }
+            event.path[4].querySelectorAll('input')[0].checked = true;*/
+        }
+    </script>
+</head>
+<body>
+    
+</body>
+</html>
